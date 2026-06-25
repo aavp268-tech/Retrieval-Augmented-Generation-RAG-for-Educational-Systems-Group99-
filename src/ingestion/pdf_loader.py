@@ -1,18 +1,28 @@
-from langchain_community.document_loaders import PyPDFLoader
+import fitz  # PyMuPDF
 import logging
 
 logger = logging.getLogger(__name__)
 
 def load_pdf(pdf_path):
     """
-    Load a single PDF and return LangChain documents.
+    Load a single PDF and extract text page by page.
     """
 
     try:
         logger.info(f"Loading PDF: {pdf_path}")
 
-        loader = PyPDFLoader(pdf_path)
-        documents = loader.load()
+        pdf = fitz.open(pdf_path)
+
+        documents = []
+
+        for page_num in range(len(pdf)):
+            page = pdf[page_num]
+            text = page.get_text()
+
+            documents.append({
+                "page": page_num + 1,
+                "content": text
+            })
 
         logger.info(f"Successfully loaded {pdf_path}")
         logger.info(f"Pages loaded: {len(documents)}")
@@ -26,7 +36,7 @@ def load_pdf(pdf_path):
 
 def load_multiple_pdfs(pdf_paths):
     """
-    Load multiple PDFs and combine all documents.
+    Load multiple PDFs.
     """
 
     all_documents = []
@@ -44,12 +54,11 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    pdf_files = [
-        "sample.pdf"
-    ]
+    pdfs = ["sample.pdf"]
 
-    documents = load_multiple_pdfs(pdf_files)
+    docs = load_multiple_pdfs(pdfs)
 
-    if documents:
-        print("\nFirst page preview:\n")
-        print(documents[0].page_content[:1000])
+    print("\nFirst page preview:\n")
+
+    if docs:
+        print(docs[0]["content"][:1000])
